@@ -1,25 +1,25 @@
 [project]
 name = "ai-agent"
-version = "0.2.0"
-description = "Enterprise-oriented Python AI agent platform with tools, memory, RAG, FastAPI, and production-ready extension points."
+version = "1.0.0"
+description = "Learning-to-production AI Agent examples with tool calling, local RAG, Ollama, and MCP."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-  "fastapi>=0.115,<1.0",
-  "pydantic-settings>=2.7,<3.0",
-  "uvicorn[standard]>=0.34,<1.0",
+  "fastmcp>=2.0,<3.0",
+  "numpy>=2.0,<3.0",
+  "openai>=1.0,<3.0",
+  "python-dotenv>=1.0,<2.0",
 ]
 
-[dependency-groups]
-dev = [
-  "pytest>=8.3,<9.0",
-  "httpx>=0.28,<1.0",
-]
+[project.optional-dependencies]
+dev = ["pytest>=8.0,<9.0"]
+
+[project.scripts]
+ai-basic = "ai_agent.basic.ai_assistant:main"
+ai-rag = "ai_agent.rag.rag:main"
+ai-mcp-server = "ai_agent.mcp.server:main"
+ai-mcp-agent = "ai_agent.mcp.agent:main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[tool.pytest.ini_options]
-pythonpath = ["src"]
-testpaths = ["tests"]

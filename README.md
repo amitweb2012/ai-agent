@@ -1,164 +1,187 @@
-# 🤖 Enterprise AI Agent
+# AI Agent
 
-A production-oriented Python AI agent platform designed to evolve from a deterministic tool-using agent into an enterprise-grade **Agentic AI** system with LLM tool calling, memory, RAG, MCP, observability, and cloud-native deployment.
+A practical Python AI Agent learning project based on the original local **AI-AGENT** implementation. It demonstrates **Ollama/OpenAI-compatible LLMs, deterministic tools, embeddings, cosine similarity, RAG, and Model Context Protocol (MCP)**.
+
+## Modules
+
+| Module | Purpose |
+|---|---|
+| `basic` | Introductory assistant, personas, prompts, and deterministic tools |
+| `rag` | Embeddings, cosine similarity, retrieval, grounded generation |
+| `mcp` | FastMCP server/client and LLM-based tool selection |
+
+## Prerequisites
+
+- Python 3.12+
+- [uv](https://docs.astral.sh/uv/)
+- [Ollama](https://ollama.com/) for the default local setup
+
+Pull the example models:
+
+```bash
+ollama pull qwen3:1.7b
+ollama pull nomic-embed-text
+```
+
+## Installation
+
+```bash
+git clone https://github.com/amitweb2012/ai-agent.git
+cd ai-agent
+uv sync --extra dev
+cp .env.example .env
+```
+
+Default configuration:
+
+```env
+BASE_URL=http://localhost:11434/v1
+API_KEY=ollama
+MODEL=qwen3:1.7b
+EMBEDDING_MODEL=nomic-embed-text
+RAG_MIN_SIMILARITY=0.5
+```
+
+Never commit a real `.env` or API keys.
+
+## Run
+
+### Basic assistant
+
+```bash
+uv run ai-basic
+```
+
+Choose Teacher, Python Expert, Travel Guide, Motivational Coach, or Interviewer.
+
+Tool examples:
+
+```text
+What time is it?
+Roll a dice
+Generate a password
+Explain notes.txt
+Summarize project.txt
+```
+
+### Simple LLM call
+
+```bash
+uv run python -m ai_agent.basic.hello
+```
+
+### RAG assistant
+
+```bash
+uv run ai-rag
+```
+
+Flow:
+
+```text
+Question → embedding → cosine similarity → best document
+         → threshold → LLM + context → grounded answer
+```
+
+Knowledge files live in `src/ai_agent/rag/knowledge/`.
+
+### MCP server and agent
+
+Terminal 1:
+
+```bash
+uv run ai-mcp-server
+```
+
+Terminal 2:
+
+```bash
+uv run ai-mcp-agent
+```
+
+The MCP server exposes `current_time`, `roll_dice`, and `generate_password`.
+
+## Testing
+
+```bash
+uv run pytest
+```
+
+## Project structure
+
+```text
+ai-agent/
+├── README.md
+├── pyproject.toml
+├── .env.example
+├── docs/
+├── src/
+│   └── ai_agent/
+│       ├── basic/
+│       ├── data/
+│       ├── mcp/
+│       └── rag/
+└── tests/
+```
 
 ## Architecture
 
 ```text
-                         ┌──────────────────┐
-                         │ Web / API Client │
-                         └────────┬─────────┘
-                                  │
-                           ┌──────▼──────┐
-                           │ API Gateway │
-                           └──────┬──────┘
-                                  │
-                     ┌────────────▼────────────┐
-                     │      Agent Service      │
-                     │  orchestration + state  │
-                     └─────┬──────┬──────┬─────┘
-                           │      │      │
-                    ┌──────▼─┐ ┌──▼───┐ ┌▼──────────┐
-                    │  LLM   │ │Memory│ │ Tools/MCP │
-                    │Provider│ │Store │ │ Registry  │
-                    └──────┬─┘ └──┬───┘ └────┬─────┘
-                           │      │            │
-                     ┌─────▼──────▼────────────▼─────┐
-                     │ RAG / Vector DB / External    │
-                     │ Systems / Observability      │
-                     └───────────────────────────────┘
+User → AI Agent
+          ├── Local Tools
+          ├── RAG → Embeddings → Similarity → Knowledge
+          └── MCP → Client → Server → Tools
+                    │
+                    ▼
+             OpenAI-compatible LLM
+                 (Ollama)
 ```
 
-## Current Capabilities
+## Configuration
 
-- **Agent orchestration** with clean provider boundaries
-- **Tool registry** with a safe calculator example
-- **LLM provider abstraction** with deterministic local provider
-- **Conversation memory** abstraction
-- **RAG/retrieval** abstraction with local lexical retrieval
-- **FastAPI** REST API and Swagger/OpenAPI
-- **Pydantic** configuration and request models
-- **Pytest** automated tests
-- **Docker + Docker Compose**
-- **GitHub Actions CI**
-- **uv** development workflow
+The OpenAI Python SDK is used against an OpenAI-compatible endpoint, so Ollama can be replaced by another compatible provider:
 
-## Project Structure
-
-```text
-ai-agent/
-├── .github/workflows/ci.yml
-├── docs/
-│   ├── architecture.md
-│   └── roadmap.md
-├── src/ai_agent/
-│   ├── agent.py
-│   ├── api.py
-│   ├── config.py
-│   ├── llm.py
-│   ├── memory.py
-│   ├── models.py
-│   ├── rag.py
-│   └── tools/
-│       ├── base.py
-│       └── calculator.py
-├── tests/
-├── Dockerfile
-├── docker-compose.yml
-├── pyproject.toml
-└── README.md
+```env
+BASE_URL=https://provider.example/v1
+API_KEY=your-key
+MODEL=your-model
+EMBEDDING_MODEL=your-embedding-model
 ```
 
-## Quick Start
+## Troubleshooting
 
-### Requirements
+**Connection refused on port 11434:** start Ollama and run `ollama list`.
 
-- Python 3.12+
-- [uv](https://docs.astral.sh/uv/)
-- Docker (optional)
-
-### Local
-
+**Model not found:**
 ```bash
-uv sync
-uv run pytest
-uv run uvicorn ai_agent.api:app --reload
+ollama pull qwen3:1.7b
 ```
 
-Open **http://127.0.0.1:8000/docs**.
-
-### Chat
-
+**Embedding model not found:**
 ```bash
-curl -X POST http://127.0.0.1:8000/chat \
-  -H 'content-type: application/json' \
-  -d '{"session_id":"demo","message":"Explain AI agents"}'
+ollama pull nomic-embed-text
 ```
 
-### Calculator Tool
+**Import errors:** run commands from the repository root through `uv`, for example `uv run ai-rag`.
 
-```bash
-curl -X POST http://127.0.0.1:8000/tools/calculate \
-  -H 'content-type: application/json' \
-  -d '{"expression":"(10 + 5) * 2"}'
-```
+## Production evolution
 
-### Docker
+The current project is intentionally educational, with clean boundaries for future:
 
-```bash
-docker compose up --build
-```
+- structured function/tool calling
+- persistent memory
+- PostgreSQL + pgvector
+- chunking, reranking and citations
+- MCP resources/prompts
+- LangGraph
+- Redis
+- OpenTelemetry and Prometheus/Grafana
+- OAuth2/OIDC/JWT/RBAC
+- Docker hardening
+- Kubernetes/Helm
+- AWS EKS / Azure AKS
 
-## Engineering Principles
-
-1. **Separation of concerns** — orchestration should not depend directly on infrastructure.
-2. **Provider abstraction** — LLM, memory, retrieval, and tools can be replaced independently.
-3. **Testability** — deterministic components make local development and CI reliable.
-4. **Security by default** — secrets belong in environment/secret stores, never source code.
-5. **Production evolution** — add infrastructure only when the corresponding requirement exists.
-
-## Production Roadmap
-
-### Phase 1 — Agent Core
-- [x] Tool abstraction
-- [x] Memory abstraction
-- [x] LLM provider abstraction
-- [x] RAG/retrieval abstraction
-
-### Phase 2 — Generative AI
-- [ ] OpenAI-compatible LLM provider
-- [ ] Structured function/tool calling
-- [ ] Streaming responses
-- [ ] Prompt versioning
-- [ ] Token and latency metrics
-
-### Phase 3 — Enterprise Knowledge
-- [ ] PostgreSQL
-- [ ] pgvector
-- [ ] Document ingestion
-- [ ] Chunking and embeddings
-- [ ] Hybrid retrieval
-- [ ] Citation-aware answers
-
-### Phase 4 — Agent Platform
-- [ ] MCP client/server integration
-- [ ] LangGraph workflows
-- [ ] Human-in-the-loop approvals
-- [ ] Durable execution
-- [ ] Agent evaluation datasets
-
-### Phase 5 — Production
-- [ ] Redis
-- [ ] OpenTelemetry
-- [ ] Prometheus/Grafana
-- [ ] Docker hardening
-- [ ] Kubernetes + Helm
-- [ ] AWS EKS / Azure AKS
-- [ ] OAuth2/OIDC/RBAC
-
-## Why This Project?
-
-This repository is intended as a practical **AI Engineering / Forward-Deployed AI Engineer portfolio project**. The architecture starts small but is designed to demonstrate the engineering decisions required to move from an LLM demo to a reliable enterprise agent platform.
+See the [documentation](docs/installation.md) and [roadmap](docs/roadmap.md).
 
 ## License
 

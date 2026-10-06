@@ -1,5 +1,11 @@
-from ai_agent.rag import Document, InMemoryRetriever
+from ai_agent.rag.cosine_similarity import cosine_similarity
+from ai_agent.rag.retriever import load_documents
 
-def test_retriever():
-    retriever = InMemoryRetriever([Document("1", "Python AI agents", {"source": "docs"})])
-    assert retriever.search("Python")[0].id == "1"
+
+def test_cosine_similarity():
+    assert cosine_similarity([1, 0], [1, 0]) == 1.0
+
+
+def test_knowledge_documents_loaded():
+    documents = load_documents()
+    assert "python.txt" in documents

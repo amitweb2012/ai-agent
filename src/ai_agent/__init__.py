@@ -1,1 +1,1 @@
-"""AI Agent package."""
+"""AI Agent learning and engineering examples."""
