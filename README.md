@@ -1,20 +1,20 @@
 # AI Agent
 
-A practical Python AI Agent learning project based on the original local **AI-AGENT** implementation. It demonstrates **Ollama/OpenAI-compatible LLMs, deterministic tools, embeddings, cosine similarity, RAG, and Model Context Protocol (MCP)**.
+A practical Python AI Agent learning project based on the original local **AI-AGENT** implementation. It demonstrates **Ollama/OpenAI-compatible LLMs, deterministic tools, embeddings, RAG, and Model Context Protocol (MCP)**.
 
 ## Modules
 
 | Module | Purpose |
 |---|---|
 | `basic` | Introductory assistant, personas, prompts, and deterministic tools |
-| `rag` | Embeddings, cosine similarity, retrieval, grounded generation |
-| `mcp` | FastMCP server/client and LLM-based tool selection |
+| `rag` | Embeddings, similarity search, retrieval, grounded generation |
+| `mcp` | MCP server/client and tool discovery |
 
 ## Prerequisites
 
 - Python 3.12+
-- [uv](https://docs.astral.sh/uv/)
-- [Ollama](https://ollama.com/) for the default local setup
+- uv
+- Ollama for the default local setup
 
 Pull the example models:
 
@@ -54,7 +54,7 @@ uv run ai-basic
 
 Choose Teacher, Python Expert, Travel Guide, Motivational Coach, or Interviewer.
 
-Tool examples:
+Example tool requests:
 
 ```text
 What time is it?
@@ -76,13 +76,6 @@ uv run python -m ai_agent.basic.hello
 uv run ai-rag
 ```
 
-Flow:
-
-```text
-Question → embedding → cosine similarity → best document
-         → threshold → LLM + context → grounded answer
-```
-
 Knowledge files live in `src/ai_agent/rag/knowledge/`.
 
 ### MCP server and agent
@@ -99,7 +92,96 @@ Terminal 2:
 uv run ai-mcp-agent
 ```
 
-The MCP server exposes `current_time`, `roll_dice`, and `generate_password`.
+The MCP server exposes tools such as `current_time`, `roll_dice`, and `generate_password`.
+
+## RAG and MCP — The Idea
+
+**RAG (Retrieval-Augmented Generation)** and **MCP (Model Context Protocol)** solve different problems in an AI system.
+
+### RAG
+
+RAG is mainly about giving an LLM **relevant information from external knowledge** before it generates an answer.
+
+```text
+Question
+   ↓
+Create embedding
+   ↓
+Search relevant knowledge
+   ↓
+Retrieve context
+   ↓
+LLM + context
+   ↓
+Answer
+```
+
+For example, an enterprise assistant can retrieve information from company policies, documentation, manuals, or databases and use that information to answer a question.
+
+**Think of RAG as:**
+
+> "Find the right information and give it to the LLM."
+
+### MCP
+
+MCP is mainly about giving an AI application a **standard way to discover and use external tools and capabilities**.
+
+```text
+User request
+     ↓
+     LLM
+     ↓
+ MCP Client
+     ↓
+ MCP Server
+     ↓
+External Tool / System
+     ↓
+Tool Result
+     ↓
+     LLM
+     ↓
+   Answer
+```
+
+For example, an AI agent could use MCP tools to access a database, call an API, create a ticket, read files, or interact with another business system.
+
+**Think of MCP as:**
+
+> "Give the AI a standard way to use tools and systems."
+
+### RAG vs MCP
+
+| | RAG | MCP |
+|---|---|---|
+| Main purpose | Retrieve knowledge | Connect AI to tools/systems |
+| Gives the AI | Information/context | Capabilities/actions |
+| Typical use | Documents, policies, manuals, knowledge bases | APIs, databases, SaaS tools, files, business systems |
+| Core idea | Search → retrieve → generate | Discover → call tool → receive result |
+| Example | "What is our leave policy?" | "Create a leave request" |
+| Usually read-oriented? | Yes | Can be read or write/action-oriented |
+
+### They can work together
+
+RAG and MCP are **not competing technologies**. A production AI agent may use both:
+
+```text
+                    AI Agent
+                   /         \
+                  /           \
+                RAG           MCP
+                 ↓             ↓
+          Find knowledge    Use tools
+                 ↓             ↓
+             Context       Tool result
+                  \           /
+                   \         /
+                      LLM
+                       ↓
+                    Answer
+```
+
+For example, an enterprise HR assistant could use **RAG** to retrieve the company's leave policy and **MCP** to call the HR system when the employee asks to submit a leave request.
 
 ## Testing
 
@@ -124,19 +206,6 @@ ai-agent/
 └── tests/
 ```
 
-## Architecture
-
-```text
-User → AI Agent
-          ├── Local Tools
-          ├── RAG → Embeddings → Similarity → Knowledge
-          └── MCP → Client → Server → Tools
-                    │
-                    ▼
-             OpenAI-compatible LLM
-                 (Ollama)
-```
-
 ## Configuration
 
 The OpenAI Python SDK is used against an OpenAI-compatible endpoint, so Ollama can be replaced by another compatible provider:
@@ -150,7 +219,7 @@ EMBEDDING_MODEL=your-embedding-model
 
 ## Troubleshooting
 
-**Connection refused on port 11434:** start Ollama and run `ollama list`.
+**Connection refused on port 11434:** start Ollama.
 
 **Model not found:**
 ```bash
@@ -162,26 +231,7 @@ ollama pull qwen3:1.7b
 ollama pull nomic-embed-text
 ```
 
-**Import errors:** run commands from the repository root through `uv`, for example `uv run ai-rag`.
-
-## Production evolution
-
-The current project is intentionally educational, with clean boundaries for future:
-
-- structured function/tool calling
-- persistent memory
-- PostgreSQL + pgvector
-- chunking, reranking and citations
-- MCP resources/prompts
-- LangGraph
-- Redis
-- OpenTelemetry and Prometheus/Grafana
-- OAuth2/OIDC/JWT/RBAC
-- Docker hardening
-- Kubernetes/Helm
-- AWS EKS / Azure AKS
-
-See the [documentation](docs/installation.md) and [roadmap](docs/roadmap.md).
+**Import errors:** run commands from the repository root through `uv`.
 
 ## License
 
